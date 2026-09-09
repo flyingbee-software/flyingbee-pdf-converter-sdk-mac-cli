@@ -67,3 +67,30 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# ============================================================
+# macOS
+# ============================================================
+# Finder metadata and AppleDouble resource forks
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+__MACOSX/
+
+# Xcode user data
+xcuserdata/
+*.xcuserstate
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+
+# ============================================================
+# Conversion output produced by the demo scripts
+# (*.log is already covered by the "Temporary files" section above)
+converted/
+output/
+
+# Editor / OS junk
+.idea/
+.vscode/
+Thumbs.db

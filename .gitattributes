@@ -1,0 +1,15 @@
+# Normalize line endings so shell scripts stay LF in the repository and run
+# correctly in Terminal (a stray CR would break the shebang on macOS too).
+*.sh text eol=lf
+
+# Documentation and specification files are text.
+*.md text eol=lf
+*.txt text eol=lf
+
+# The SDK runtime is binary payload; never let git rewrite it.
+*.pdf binary
+*.bundle binary
+*.framework binary
+*.traineddata binary
+*.ttf binary
+*.pfb binary
