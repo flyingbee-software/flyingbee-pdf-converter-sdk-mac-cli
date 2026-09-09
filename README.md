@@ -4,7 +4,7 @@ Flyingbee PDF Converter for macOS is a high-performance, headless PDF converter 
 
 The package ships as a **single universal binary** (Apple silicon + Intel) plus its runtime dependencies, so there is nothing to compile and nothing to rename per architecture.
 
-![Flyingbee PDF Converter](https://www.flyingbee.com/pdf-converter/images/FPPDFConverter-Console.jpg)
+![Flyingbee PDF Converter macOS CLI](FPPDFFramework_CLI_Mac.jpg)
 
 ---
 
