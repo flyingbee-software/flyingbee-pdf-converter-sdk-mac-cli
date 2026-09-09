@@ -1,0 +1,74 @@
+# Run converter.sh automatically when SDK or script files change.
+#
+# Triggers on `push` whenever a matched path (the CLI binary, the framework, the
+# resources bundle or the converter scripts) is modified, then runs the bundled
+# converter.sh as a smoke test and uploads the produced .docx files together with
+# conversion.log as artifacts.
+#
+# NOTE: the bundled SDK is an EXPIRED trial (converts the first 3 pages only) and
+# returns a non-zero exit code even on success, so the job judges pass/fail by the
+# output files.
+#
+# NOTE: BSD find on macOS has no -printf, so file lists are printed with a loop.
+
+name: Convert on change
+
+on:
+  push:
+    paths:
+      - 'FPPDFFramework_CLI/FPPDFConverter'
+      - 'FPPDFFramework_CLI/FPPDFFramework.framework/**'
+      - 'FPPDFFramework_CLI/Resources.bundle/**'
+      - 'FPPDFFramework_CLI/*.sh'
+      - '.github/workflows/convert-on-change.yml'
+  workflow_dispatch:
+
+jobs:
+  convert-on-change:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Clear quarantine and re-sign ad hoc
+        shell: bash
+        run: |
+          # Files restored by git can carry the com.apple.quarantine attribute,
+          # which makes Gatekeeper refuse to launch the binary. Clear it and apply
+          # an ad-hoc signature. Both steps are best effort on a CI runner.
+          xattr -dr com.apple.quarantine FPPDFFramework_CLI || true
+          codesign --force --sign - FPPDFFramework_CLI/FPPDFConverter || true
+          codesign --force --deep --sign - FPPDFFramework_CLI/FPPDFFramework.framework || true
+          chmod +x FPPDFFramework_CLI/FPPDFConverter
+
+      - name: Run converter.sh
+        shell: bash
+        run: |
+          cd FPPDFFramework_CLI
+          # Files committed from a non-Unix machine may lose the executable bit.
+          chmod +x converter.sh
+          mkdir -p converted
+          ./converter.sh || true
+
+          # The converter returns a non-zero exit code under an expired/trial
+          # license even when it succeeds, so decide by the produced output
+          # instead. converter.sh writes the .docx files into converted/.
+          docs=$(find converted -maxdepth 1 -name "*.docx" | wc -l)
+          if [ "$docs" -eq 0 ]; then
+            echo "::error::converter.sh produced no .docx output in converted/ (conversion may have failed)."
+            exit 1
+          fi
+          echo "Produced $docs docx file(s) in converted/:"
+          for f in converted/*.docx; do
+            echo "  - $(basename "$f")"
+          done
+          exit 0
+
+      - name: Upload converted files and conversion log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: convert-output
+          path: |
+            FPPDFFramework_CLI/converted/
+            FPPDFFramework_CLI/conversion.log
